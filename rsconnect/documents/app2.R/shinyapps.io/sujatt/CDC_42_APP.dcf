@@ -1,0 +1,13 @@
+name: CDC_42_APP
+title: CDC_42_APP
+username:
+account: sujatt
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3623605
+bundleId: 4211447
+url: https://sujatt.shinyapps.io/CDC_42_APP/
+when: 1613072423.03901
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app.R|app3.R
