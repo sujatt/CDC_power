@@ -8,7 +8,7 @@ library(DT)
 
 
 ui <- fluidPage(
-  titlePanel("Power Analysis for the CDC"), # Application Title
+  titlePanel("Sample Size Estimation for Vaccine Effectiveness Research"), # Application Title
   
    
   sidebarPanel(
@@ -36,22 +36,22 @@ ui <- fluidPage(
       choices = c(2,3)
      ),
      sliderInput("v1e",
-                 "Vaccine Alpha effectiveness (%):",
+                 "Vaccine 1 effectiveness (%):",
                  min = 0,  max = 100, value = 50),
   sliderInput("v2e",
-              "Vaccine Beta effectiveness (%):",
+              "Vaccine 2 effectiveness (%):",
               min = 0,  max = 100, value = 50),
   sliderInput("v3e",
-              "Vaccine Gamma effectiveness (%):",
+              "Vaccine 3 effectiveness (%):",
               min = 0,  max = 100, value = 50),
      sliderInput("vm1",
-                 "Vaccine Alpha market shares: ",
+                 "Vaccine 1 market shares: ",
                  min = 0,  max = 100, value = 1),
   sliderInput("vm2",
-              "Vaccine Beta market shares: ",
+              "Vaccine 2 market shares: ",
               min = 0,  max = 100, value = 1),
   sliderInput("vm3",
-              "Vaccine Gamma market shares: ",
+              "Vaccine 3 market shares: ",
               min = 0,  max = 100, value = 1),
     
     
@@ -78,8 +78,8 @@ server <- function(input, output, session) {
   colnames(df1) <- c("Site","Attrition Rate","Covid Rate")
   colnames(df2) <- c("Vaccine","Effectiveness","Market Share")
   
-  df1$Site <- c("Site1","Site2","Site3")
-  df2$Vaccine <- c("Alpha","Beta","Gamma")
+  df1$Site <- c("Site A","Site B","Site C")
+  df2$Vaccine <- c("Vaccine 1","Vaccine 2","Vaccine 3")
  
   
   # Edit fdata1 to creative table1
