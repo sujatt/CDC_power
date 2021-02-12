@@ -58,24 +58,21 @@ ui <- fluidPage(
 
 
     
-    actionButton("update", "Change"),
-    actionButton("sim100", "Simulate 100")
+    actionButton("update", "Run (takes ~ 5 seconds) "),
+    actionButton("sim100", "Simulate 100 (takes a while!)")
   ),
 
   mainPanel(
 
-    
-  h3("Site parameters"), 
-  DT::DTOutput('table1'),
-  h3("Vaccine parameters"),
-  DT::DTOutput('table2'),
-  h3("Example of a single simulation result:"),
-  DT::DTOutput('table_simulated_sites'),
-  h3("Example of estimated vaccine effectiveness:"),
-  DT::DTOutput('table_est_veff'),
-  h3("Distribution of the estimates of vaccine effectiveness based on 100 simulations"),
-  plotOutput(outputId = 'veff_distributions', width='100%', height='600px')
+    tabsetPanel(
+      tabPanel("Site parameters", DT::DTOutput('table1')), 
+      tabPanel("Vaccine parameters", DT::DTOutput('table2')), 
+      tabPanel("Example of a single simulation result:", DT::DTOutput('table_simulated_sites')), 
+      tabPanel("Example of estimated vaccine effectiveness:", DT::DTOutput('table_est_veff')), 
+      tabPanel("Distribution of the estimates of vaccine effectiveness based on 100 simulations", plotOutput(outputId = 'veff_distributions', width='100%', height='600px'))
+    )
   )
+
 
 ) # end of ui fluidPage()
 
