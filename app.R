@@ -1,6 +1,7 @@
 # Shiny app for power analysis 
 # Author: ST, Feb 11, 2021 
 # Stas branch: SK, Feb 11 2021
+# Version with 3 vaccines
 
 library(tidyverse)
 library(shiny)
@@ -33,31 +34,7 @@ ui <- fluidPage(
     sliderInput("corr_attr_covid",
                  "Correlation between COVID rate and attrition:",
                  min = -1,  max = 1, value = 0),
-    radioButtons(
-      inputId = "nvaccines",
-      label = "Vaccines",
-      choices = c(2,3),
-      selected = 3
-     ),
-
-  conditionalPanel(
-    "input.nvaccines == 2",
-    sliderInput("v1e",
-                "Vaccine 1 effectiveness (%):",
-                min = 0,  max = 100, value = 50),
-    sliderInput("v2e",
-                "Vaccine 2 effectiveness (%):",
-                min = 0,  max = 100, value = 50),
-    sliderInput("vm1",
-                "Vaccine 1 market shares: ",
-                min = 0,  max = 100, value = 1),
-    sliderInput("vm2",
-                "Vaccine 2 market shares: ",
-                min = 0,  max = 100, value = 1)
-
-  ),
-  conditionalPanel(
-    "input.nvaccines == 3",
+   
     sliderInput("v1e",
                 "Vaccine 1 effectiveness (%):",
                 min = 0,  max = 100, value = 50),
@@ -77,7 +54,7 @@ ui <- fluidPage(
     sliderInput("vm3",
                 "Vaccine 3 market shares: ",
                 min = 0,  max = 100, value = 1),
-  ),
+
 
 
     
@@ -125,21 +102,15 @@ server <- function(input, output, session) {
   fdata_vacc <- reactive({
     df2$Vaccine <- c("Vaccine Alpha","Vaccine Beta","Vaccine Gamma")
     
-    if (input$nvaccines == 3) # three vaccines 
-    {
+  
       df2$`Market Share` <- c(input$vm1, input$vm2, input$vm3)
       df2$Effectiveness <- c(input$v1e, input$v2e, input$v3e)
-    }
-    else # two vaccines
-    {
-      df2$`Market Share` <-c(input$vm1, input$vm2, 0)
-      df2$Effectiveness <- c(input$v1e, input$v2e, 0)
-    }
+  
     
     print(df1)
     print(df2)
     
-    df2[1:input$nvaccines,]
+    df2[1:3,] # Since we have n=3 vaccines
   }) # end of fdata_vacc
 
   fdata_simul <- reactive({
