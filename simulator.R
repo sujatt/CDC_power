@@ -128,28 +128,28 @@ Ptransition <- function(
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccine 2, week 2, infected'] <- (1-v1e*1/4)*covid_per_day # partial protection
+  p['vaccine 2, week 2, infected'] <- (1-v2e*1/4)*covid_per_day # partial protection
   p['vaccine 2, week 2, not infected'] <- 1 - p['vaccine 2, week 2, infected'] - p['dropped out']
   P['vaccine 2, week 1, not infected',] <- p
   
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccine 2, week 3, infected'] <- (1-v1e*2/4)*covid_per_day # partial protection
+  p['vaccine 2, week 3, infected'] <- (1-v2e*2/4)*covid_per_day # partial protection
   p['vaccine 2, week 3, not infected'] <- 1 - p['vaccine 2, week 3, infected'] - p['dropped out']
   P['vaccine 2, week 2, not infected',] <- p
   
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccine 2, week 4, infected'] <- (1-v1e*3/4)*covid_per_day # partial protection
+  p['vaccine 2, week 4, infected'] <- (1-v2e*3/4)*covid_per_day # partial protection
   p['vaccine 2, week 4, not infected'] <- 1 - p['vaccine 2, week 4, infected'] - p['dropped out']
   P['vaccine 2, week 3, not infected',] <- p
   
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccinated 2, infected'] <- (1-v1e)*covid_per_day # full protection
+  p['vaccinated 2, infected'] <- (1-v2e)*covid_per_day # full protection
   p['vaccinated 2, not infected'] <- 1 - p['vaccinated 2, infected'] - p['dropped out']
   P['vaccine 2, week 4, not infected',] <- p
   P['vaccinated 2, not infected',] <- p
@@ -158,28 +158,28 @@ Ptransition <- function(
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccine 3, week 2, infected'] <- (1-v1e*1/4)*covid_per_day # partial protection
+  p['vaccine 3, week 2, infected'] <- (1-v3e*1/4)*covid_per_day # partial protection
   p['vaccine 3, week 2, not infected'] <- 1 - p['vaccine 3, week 2, infected'] - p['dropped out']
   P['vaccine 3, week 1, not infected',] <- p
   
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccine 3, week 3, infected'] <- (1-v1e*2/4)*covid_per_day # partial protection
+  p['vaccine 3, week 3, infected'] <- (1-v3e*2/4)*covid_per_day # partial protection
   p['vaccine 3, week 3, not infected'] <- 1 - p['vaccine 3, week 3, infected'] - p['dropped out']
   P['vaccine 3, week 2, not infected',] <- p
   
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccine 3, week 4, infected'] <- (1-v1e*3/4)*covid_per_day # partial protection
+  p['vaccine 3, week 4, infected'] <- (1-v3e*3/4)*covid_per_day # partial protection
   p['vaccine 3, week 4, not infected'] <- 1 - p['vaccine 3, week 4, infected'] - p['dropped out']
   P['vaccine 3, week 3, not infected',] <- p
   
   p <- p0
   names(p) <- col_row_names
   p['dropped out'] <- dropout_rate
-  p['vaccinated 3, infected'] <- (1-v1e)*covid_per_day # full protection
+  p['vaccinated 3, infected'] <- (1-v3e)*covid_per_day # full protection
   p['vaccinated 3, not infected'] <- 1 - p['vaccinated 3, infected'] - p['dropped out']
   P['vaccine 3, week 4, not infected',] <- p
   P['vaccinated 3, not infected',] <- p
@@ -366,6 +366,12 @@ simulate_site_trajectories <- function(
                               v3r = (vaccinated_end-vaccinated_start)/52*vm3,
                               covid_rate = covid_rate
                               )
+  
+  print("Some checks on the transition matrix:")
+  print(P_transition['unvaccinated, not infected','unvaccinated, infected'])
+  print(P_transition['vaccinated 1, not infected','vaccinated 1, infected'])
+  print(P_transition['vaccinated 2, not infected','vaccinated 2, infected'])
+  print(P_transition['vaccinated 3, not infected','vaccinated 3, infected'])
   
   # pre-populate the person-week matrices
   trajectories <- matrix(0, nrow = n, ncol = 52)

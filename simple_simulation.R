@@ -2,7 +2,7 @@
 
 df1 <- simulate_site_settings(n_sites = 8, attr_lo = 20, attr_hi = 50, covid_lo = 10, covid_hi = 50)
 
-system.time( sim_study <- simulate_study(sites=df1) )
+system.time( sim_study <- simulate_study(sites=df1, v1e = 0.75, v2e = 0.50, v3e = 0.24, verbose = TRUE) )
 
 (pooled_sim_study <- colSums(sim_study))
 
