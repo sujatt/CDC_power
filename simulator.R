@@ -367,11 +367,13 @@ simulate_site_trajectories <- function(
                               covid_rate = covid_rate
                               )
   
-  print("Some checks on the transition matrix:")
-  print(P_transition['unvaccinated, not infected','unvaccinated, infected'])
-  print(P_transition['vaccinated 1, not infected','vaccinated 1, infected'])
-  print(P_transition['vaccinated 2, not infected','vaccinated 2, infected'])
-  print(P_transition['vaccinated 3, not infected','vaccinated 3, infected'])
+  if (verbose) {
+    print("Some checks on the transition matrix:")
+    print(P_transition['unvaccinated, not infected','unvaccinated, infected'])
+    print(P_transition['vaccinated 1, not infected','vaccinated 1, infected'])
+    print(P_transition['vaccinated 2, not infected','vaccinated 2, infected'])
+    print(P_transition['vaccinated 3, not infected','vaccinated 3, infected'])
+  }
   
   # pre-populate the person-week matrices
   trajectories <- matrix(0, nrow = n, ncol = 52)
@@ -493,4 +495,61 @@ crude_veff <- function(site_summary) {
   ve3 <- 1 - ir3/ir0
   
   return(c('ve1'=unname(ve1), 've2'=unname(ve2), 've3'=unname(ve3) ) )
+}
+
+#' Simulate the distribution of vaccine effectivenss
+#' 
+#' @param vaccinated_start    Proportion vaccinated at the beginning of the study, default 0.3
+#' @param vaccinated_end      Proportion vaccinated at the beginning of the study, default 0.7
+#' @param vm1                 Market share of vaccine 1 (default 0.4).
+#' @param vm2                 Market share of vaccine 1 (default 0.4).
+#' @param vm3                 Market share of vaccine 1 (default 0.2).
+#'                            The two vaccine situation can be modeled by setting this to zero.
+#' @param v1e                 Effectiveness of vaccine 1 (default 0.50).
+#' @param v2e                 Effectiveness of vaccine 2 (default 0.50).
+#' @param v3e                 Effectiveness of vaccine 3 (default 0.50). 
+#'                            The two vaccine situation can be modeled by setting this to zero.
+#' @param n                   Number of participants per site (default 1000)
+#' @param seed                Random seed for reproducibility
+#' @param sites               n_sites x 3 data frame with site parameters
+#' @param verbose             Produce more diagnostic output
+#' @param reps                Number of replications (default 100)
+#' 
+#' @return                    (reps x 5) data frame of estimated vaccine effectiveness
+#' @export
+simulate_multiple_studies <- function(
+    verbose = FALSE,
+    seed = NULL,
+    vaccinated_start = 0.3,
+    vaccinated_end = 0.7,
+    vm1 = 0.4, vm2 = 0.4, vm3 = 0.2,
+    v1e = 0.50, v2e = 0.50, v3e = 0.50, # vaccine efficiency
+    sites,   # data frame of site parameters
+    n = 1000, # number of simulated persons per site
+    reps = 100 # number of replications
+) {
+
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
+  veff_dist <- data.frame( r=1:reps, v1e = NA, v2e = NA, v3e=NA, timing = NA)
+  
+  for(i in 1:reps) {
+    timing <- system.time(this_study <- simulate_study( 
+        verbose = FALSE,
+        sites = sites, n = n,
+        vaccinated_start = vaccinated_start,
+        vaccinated_end   = vaccinated_end,
+        vm1 = vm1, v1e = v1e, 
+        vm2 = vm2, v2e = v2e, 
+        vm3 = vm3, v3e = v3e ) )
+    this_veff <- crude_veff(this_study)
+    veff_dist[i,2:4] <- this_veff
+    veff_dist[i,'timing'] <- timing['elapsed']
+    cat('.')
+    if (i %% 20 == 0) cat(' ', i, '\n')
+  }
+  
+  return(veff_dist)  
 }
