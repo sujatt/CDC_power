@@ -5,8 +5,10 @@
 library(tidyverse)
 library(shiny)
 library(DT)
+library(stringr)
 
 n_sites <- 8
+source('simulator.R')
 
 ui <- fluidPage(
   titlePanel("Sample Size Estimation for Vaccine Effectiveness Research"), # Application Title
@@ -32,7 +34,7 @@ ui <- fluidPage(
                  "Correlation between COVID rate and attrition:",
                  min = -1,  max = 1, value = 0),
     radioButtons(
-      inputId = "n_vaccines",
+      inputId = "nvaccines",
       label = "Vaccines",
       choices = c(2,3),
       selected = 3
@@ -40,7 +42,7 @@ ui <- fluidPage(
     
     
     conditionalPanel(
-      "input.n_vaccines == 2",
+      "input.nvaccines == '2'",
       sliderInput("v1e",
                   "Vaccine 1 effectiveness (%):",
                   min = 0,  max = 100, value = 50),
@@ -56,7 +58,7 @@ ui <- fluidPage(
       
     ),
     conditionalPanel(
-      "input.n_vaccines == 3",
+      "input.nvaccines == '3'",
       sliderInput("v1e",
                   "Vaccine 1 effectiveness (%):",
                   min = 0,  max = 100, value = 50),
@@ -83,9 +85,15 @@ ui <- fluidPage(
 
   mainPanel(
 
+    
+  h3("Site parameters"), 
   DT::DTOutput('table1'),
-  DT::DTOutput('table2')
-  
+  h3("Vaccine parameters"),
+  DT::DTOutput('table2'),
+  h3("Site simualtion results"),
+  DT::DTOutput('table_simulated_sites'),
+  h3("Estimated vaccine effectiveness"),
+  DT::DTOutput('table_est_veff'),
   )
 
 ) # end of ui fluidPage()
@@ -94,36 +102,60 @@ server <- function(input, output, session) {
 
   df1 <- as.data.frame(matrix(0,nrow=n_sites,3)) # Dummy dataframes to contain the results 
   df2 <- as.data.frame(matrix(0,nrow=3,3))
+  df3 <- as.data.frame(matrix(0,nrow=n_sites, ncol = 11))
   
   colnames(df1) <- c("Site","Attrition Rate","Covid Rate")
   colnames(df2) <- c("Vaccine","Effectiveness","Market Share")
   
-  df1$Site <- paste("Site",1:n_sites)
-
   # Edit fdata_sites to create table1
   fdata_sites <- reactive({ 
-    df1$`Attrition Rate` <- runif(n_sites)*(input$range_attr[2]-input$range_attr[1]) + input$range_attr[1]
-    df1$`Covid Rate`     <- runif(n_sites)*(input$range_covid[2]-input$range_covid[1]) + input$range_covid[1]
+    df1 <- simulate_site_settings(n_sites=n_sites, 
+                           attr_lo=input$range_attr[1], attr_hi=input$range_attr[2], 
+                           covid_lo=input$range_covid[1], covid_hi=input$range_covid[2])
+    print(df1)
+    print(df2)
     df1
   }) # end of fdata_sites
    
   # Edit fdata_vacc to create table2 
   fdata_vacc <- reactive({
-    df2$Effectiveness <- c(input$v1e, input$v2e, input$v3e)
     df2$Vaccine <- c("Vaccine Alpha","Vaccine Beta","Vaccine Gamma")
     
-    if (input$n_vaccines == 3) # three vaccines 
+    if (input$nvaccines == 3) # three vaccines 
     {
       df2$`Market Share` <- c(input$vm1, input$vm2, input$vm3)
+      df2$Effectiveness <- c(input$v1e, input$v2e, input$v3e)
     }
     else # two vaccines
     {
       df2$`Market Share` <-c(input$vm1, input$vm2, 0)
+      df2$Effectiveness <- c(input$v1e, input$v2e, 0)
     }
     
-    df2[1:input$n_vaccines,]
+    print(df1)
+    print(df2)
+    
+    df2[1:input$nvaccines,]
   }) # end of fdata_vacc
 
+  fdata_simul <- reactive({
+    
+    print("This is what I see in fdata_simul():")
+    df1 <- fdata_sites()
+    df2 <- fdata_vacc()
+    print(df1)
+    print(df2)
+    
+    df3 <- simulate_study( verbose = FALSE,
+              sites = df1, n = input$n_per_site,
+              vaccinated_start = input$vacc_start/100,
+              vaccinated_end   = input$vacc_end/100,
+              vm1 = df2[1,'Market Share']/100, v1e = df2[1,'Effectiveness']/100, 
+              vm2 = df2[2,'Market Share']/100, v2e = df2[2,'Effectiveness']/100, 
+              vm3 = df2[3,'Market Share']/100, v3e = df2[3, 'Effectiveness']/100)
+    df3
+  }) # end of fdata_simul
+  
   observeEvent(input$update, {
     output$table1 <- DT::renderDataTable({
       data1 <- fdata_sites()
@@ -135,6 +167,36 @@ server <- function(input, output, session) {
     output$table2 <- DT::renderDataTable({
       data2 <- fdata_vacc()
       data2
+    })
+  })
+  
+  observeEvent(input$update, {
+    output$table_simulated_sites <- DT::renderDataTable({
+      # run the simulation for all sites, once
+      
+      df3 <- fdata_simul()
+      names(df3) <- stringr::str_replace_all( names(df3), fixed("_"), " " )
+      names(df3) <- stringr::str_replace_all( names(df3), fixed("1"), " Alpha" )
+      names(df3) <- stringr::str_replace_all( names(df3), fixed("2"), " Beta" )
+      names(df3) <- stringr::str_replace_all( names(df3), fixed("3"), " Gamma" )
+      df3
+    })
+  })
+  
+  observeEvent(input$update, {
+    output$table_est_veff <- DT::renderDataTable({
+      # run the simulation for all sites, once
+      
+      data3 <- fdata_simul()
+      
+      print(data3)
+      print(crude_veff(data3))
+      
+      df4 <- data.frame( Vaccine = fdata_vacc()[,'Vaccine'], 
+                         `Estimated effectiveness, %` = 100*crude_veff(data3) )
+      rownames(df4) <- c(1:nrow(df4))
+      
+      df4
     })
   })
   
