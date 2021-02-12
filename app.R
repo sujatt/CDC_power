@@ -39,24 +39,7 @@ ui <- fluidPage(
       choices = c(2,3),
       selected = 3
      ),
-    
-    
-    conditionalPanel(
-      "input.nvaccines == '2'",
-      sliderInput("v1e",
-                  "Vaccine 1 effectiveness (%):",
-                  min = 0,  max = 100, value = 50),
-      sliderInput("v2e",
-                  "Vaccine 2 effectiveness (%):",
-                  min = 0,  max = 100, value = 50),
-      sliderInput("vm1",
-                  "Vaccine 1 market shares: ",
-                  min = 0,  max = 100, value = 50),
-      sliderInput("vm2",
-                  "Vaccine 2 market shares: ",
-                  min = 0,  max = 100, value = 50)
-      
-    ),
+
     conditionalPanel(
       "input.nvaccines == '3'",
       sliderInput("v1e",
@@ -80,7 +63,23 @@ ui <- fluidPage(
                   min = 0,  max = 100, value = 20),
     ),    
     
-        actionButton("update", "Change")
+    conditionalPanel(
+      "input.nvaccines == '2'",
+      sliderInput("v1e",
+                  "Vaccine 1 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("v2e",
+                  "Vaccine 2 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("vm1",
+                  "Vaccine 1 market share: ",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("vm2",
+                  "Vaccine 2 market share: ",
+                  min = 0,  max = 100, value = 50)
+    ),
+    
+    actionButton("update", "Change")
   ),
 
   mainPanel(
@@ -93,7 +92,7 @@ ui <- fluidPage(
   h3("Site simualtion results"),
   DT::DTOutput('table_simulated_sites'),
   h3("Estimated vaccine effectiveness"),
-  DT::DTOutput('table_est_veff'),
+  DT::DTOutput('table_est_veff')
   )
 
 ) # end of ui fluidPage()
@@ -121,7 +120,7 @@ server <- function(input, output, session) {
   fdata_vacc <- reactive({
     df2$Vaccine <- c("Vaccine Alpha","Vaccine Beta","Vaccine Gamma")
     
-    if (input$nvaccines == 3) # three vaccines 
+    if (input$nvaccines == '3') # three vaccines 
     {
       df2$`Market Share` <- c(input$vm1, input$vm2, input$vm3)
       df2$Effectiveness <- c(input$v1e, input$v2e, input$v3e)
@@ -146,13 +145,14 @@ server <- function(input, output, session) {
     print(df1)
     print(df2)
     
-    df3 <- simulate_study( verbose = FALSE,
+    df3 <- simulate_study( verbose = TRUE,
               sites = df1, n = input$n_per_site,
               vaccinated_start = input$vacc_start/100,
               vaccinated_end   = input$vacc_end/100,
               vm1 = df2[1,'Market Share']/100, v1e = df2[1,'Effectiveness']/100, 
               vm2 = df2[2,'Market Share']/100, v2e = df2[2,'Effectiveness']/100, 
               vm3 = df2[3,'Market Share']/100, v3e = df2[3, 'Effectiveness']/100)
+    
     df3
   }) # end of fdata_simul
   
