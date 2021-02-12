@@ -37,26 +37,48 @@ ui <- fluidPage(
       choices = c(2,3),
       selected = 3
      ),
-    sliderInput("v1e",
-                 "Vaccine 1 effectiveness (%):",
-                 min = 0,  max = 100, value = 50),
-    sliderInput("v2e",
-              "Vaccine 2 effectiveness (%):",
-              min = 0,  max = 100, value = 50),
-    sliderInput("v3e",
-              "Vaccine 3 effectiveness (%):",
-              min = 0,  max = 100, value = 50),
-    sliderInput("vm1",
-                 "Vaccine 1 market share: ",
-                 min = 0,  max = 100, value = 40),
-    sliderInput("vm2",
-              "Vaccine 2 market share: ",
-              min = 0,  max = 100, value = 40),
-    sliderInput("vm3",
-              "Vaccine 3 market share: ",
-              min = 0,  max = 100, value = 20),
-
-    actionButton("update", "Change")
+    
+    
+    conditionalPanel(
+      "input.n_vaccines == 2",
+      sliderInput("v1e",
+                  "Vaccine 1 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("v2e",
+                  "Vaccine 2 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("vm1",
+                  "Vaccine 1 market shares: ",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("vm2",
+                  "Vaccine 2 market shares: ",
+                  min = 0,  max = 100, value = 50)
+      
+    ),
+    conditionalPanel(
+      "input.n_vaccines == 3",
+      sliderInput("v1e",
+                  "Vaccine 1 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("v2e",
+                  "Vaccine 2 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      sliderInput("v3e",
+                  "Vaccine 3 effectiveness (%):",
+                  min = 0,  max = 100, value = 50),
+      
+      sliderInput("vm1",
+                  "Vaccine 1 market share: ",
+                  min = 0,  max = 100, value = 40),
+      sliderInput("vm2",
+                  "Vaccine 2 market share: ",
+                  min = 0,  max = 100, value = 40),
+      sliderInput("vm3",
+                  "Vaccine 3 market share: ",
+                  min = 0,  max = 100, value = 20),
+    ),    
+    
+        actionButton("update", "Change")
   ),
 
   mainPanel(
@@ -80,7 +102,6 @@ server <- function(input, output, session) {
 
   # Edit fdata_sites to create table1
   fdata_sites <- reactive({ 
-    data <- df1
     df1$`Attrition Rate` <- runif(n_sites)*(input$range_attr[2]-input$range_attr[1]) + input$range_attr[1]
     df1$`Covid Rate`     <- runif(n_sites)*(input$range_covid[2]-input$range_covid[1]) + input$range_covid[1]
     df1
@@ -88,8 +109,6 @@ server <- function(input, output, session) {
    
   # Edit fdata_vacc to create table2 
   fdata_vacc <- reactive({
-    data <- df2
-
     df2$Effectiveness <- c(input$v1e, input$v2e, input$v3e)
     df2$Vaccine <- c("Vaccine Alpha","Vaccine Beta","Vaccine Gamma")
     
