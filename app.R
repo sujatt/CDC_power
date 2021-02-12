@@ -5,7 +5,7 @@
 library(tidyverse)
 library(shiny)
 library(DT)
-library(stringr)
+library(scales)
 
 n_sites <- 8
 source('simulator.R')
@@ -79,7 +79,8 @@ ui <- fluidPage(
                   min = 0,  max = 100, value = 50)
     ),
     
-    actionButton("update", "Change")
+    actionButton("update", "Change"),
+    actionButton("sim100", "Simulate 100")
   ),
 
   mainPanel(
@@ -89,10 +90,12 @@ ui <- fluidPage(
   DT::DTOutput('table1'),
   h3("Vaccine parameters"),
   DT::DTOutput('table2'),
-  h3("Site simualtion results"),
+  h3("Example of a single simualtion results:"),
   DT::DTOutput('table_simulated_sites'),
-  h3("Estimated vaccine effectiveness"),
-  DT::DTOutput('table_est_veff')
+  h3("Example of estimated vaccine effectiveness:"),
+  DT::DTOutput('table_est_veff'),
+  h3("Distribution of the estimates of vaccine effectiveness based on 100 simulations"),
+  plotOutput(outputId = 'veff_distributions', width='100%', height='600px')
   )
 
 ) # end of ui fluidPage()
@@ -199,6 +202,48 @@ server <- function(input, output, session) {
       df4
     })
   })
+  
+  observeEvent(input$sim100, {
+    # simulate the study 100 times with the settings as specified
+    
+    print("This is what I see in sim100():")
+    df1 <- fdata_sites()
+    df2 <- fdata_vacc()
+    print(df1)
+    print(df2)
+
+    # repeat simulations
+    sim100 <- simulate_multiple_studies( verbose=FALSE,
+      sites = df1, 
+      n = input$n_per_site, reps = 100,
+      vaccinated_start = input$vacc_start/100,
+      vaccinated_end   = input$vacc_end/100,
+      vm1 = df2[1,'Market Share']/100, v1e = df2[1,'Effectiveness']/100, 
+      vm2 = df2[2,'Market Share']/100, v2e = df2[2,'Effectiveness']/100, 
+      vm3 = df2[3,'Market Share']/100, v3e = df2[3, 'Effectiveness']/100
+    )
+    
+    # assemble distribution plots
+    output$veff_distributions <- renderPlot({
+    ggplot(sim100) + 
+      geom_density(aes(x=v1e, linetype='Alpha', colour='Alpha'), size = 1) + 
+      geom_density(aes(x=v2e, linetype='Beta', colour='Beta'), size = 1) +
+      geom_density(aes(x=v3e, linetype='Gamma', colour='Gamma'), size = 1) + 
+      scale_linetype_manual("Vaccines", values=c('dashed', 'dotted', 'twodash')) +
+      scale_colour_manual("Vaccines", values=c('#7566A0', '#789D4A', '#E87722')) +
+      scale_x_continuous(breaks = scales::pretty_breaks(n = 6)) +
+      xlab('Vaccine effectiveness') +
+      theme_light() +
+      theme(legend.position = "bottom", legend.box = "horizontal") # legend at the bottom
+    }
+    # plotting option such as width and height can go here
+    )
+    
+    # would also need to return the sim100 object somehow?
+    
+  })
+  
+  
   
 } # end of server
 
