@@ -462,7 +462,7 @@ simulate_study <- function(
   
   n_sites <- nrow(sites)
   site_summary <- as.data.frame( matrix(0,nrow=0,ncol=11) )
-  sites_persons <- as.data.frame( matrix(0, nrow=0, ncol=0))
+  # sites_persons <- as.data.frame( matrix(0, nrow=0, ncol=0))
   
   for(k in 1:n_sites) {
     this_site <- simulate_site_trajectories(
@@ -475,7 +475,8 @@ simulate_study <- function(
     site_summary[k,] <- this_site$summary
     persons_summary <- as.data.frame(this_site$persons)
     persons_summary$site <- k
-    sites_persons <- bind_rows( sites_persons, persons_summary )
+    if (k==1) sites_persons <- persons_summary
+    else sites_persons <- bind_rows( sites_persons, persons_summary )
   }
   names(site_summary) <- names(this_site$summary)
     
