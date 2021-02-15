@@ -47,13 +47,13 @@ ui <- fluidPage(
     
     sliderInput("vm1",
                 "Vaccine 1 market shares: ",
-                min = 0,  max = 100, value = 1),
+                min = 0,  max = 100, value = 50),
     sliderInput("vm2",
                 "Vaccine 2 market shares: ",
-                min = 0,  max = 100, value = 1),
+                min = 0,  max = 100, value = 30),
     sliderInput("vm3",
                 "Vaccine 3 market shares: ",
-                min = 0,  max = 100, value = 1),
+                min = 0,  max = 100, value = 20),
 
 
 
@@ -90,6 +90,7 @@ server <- function(input, output, session) {
     df1 <- simulate_site_settings(n_sites=n_sites, 
                            attr_lo=input$range_attr[1], attr_hi=input$range_attr[2], 
                            covid_lo=input$range_covid[1], covid_hi=input$range_covid[2])
+    print("This is what I see in the fdata_sites() reactive:")
     print(df1)
     print(df2)
     df1
@@ -183,7 +184,7 @@ server <- function(input, output, session) {
     print(df2)
 
     # repeat simulations
-    sim100 <- simulate_multiple_studies( verbose=FALSE,
+    sim100 <- simulate_multiple_studies( verbose=TRUE,
       sites = df1, 
       n = input$n_per_site, reps = 100,
       vaccinated_start = input$vacc_start/100,
