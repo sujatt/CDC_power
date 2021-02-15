@@ -326,6 +326,7 @@ simulate_site_settings <- function(n_sites, attr_lo, attr_hi, covid_lo, covid_hi
 #'                            $P_transition: the transition matrix
 #'                            $start: the starting state (i.e., the first column of the trajectories)
 #'                            $end: the ending state (i.e., the last column of trajectories)
+#'                            $persons: person level summaries
 #'                            
 #' @examples
 #' 
@@ -392,13 +393,17 @@ simulate_site_trajectories <- function(
   }
   
   # summaries
-  summary <- person_results( trajectories[1,], col_row_names = colnames(P_transition))
-  for(i in 2:n) {
-    summary <- summary + person_results( trajectories[i,], col_row_names = colnames(P_transition))
-  }
-  summary <- c(summary, 'n'=n)
+  person1 <- person_results( trajectories[1,], col_row_names = colnames(P_transition))
+  persons <- matrix(0,nrow=n, ncol=length(person1))
   
-  return(list(trajectories=trajectories, summary=summary, p_init = p_init, P_transition = P_transition,
+  for(i in 1:n) {
+    persons[i,] <- person_results( trajectories[i,], col_row_names = colnames(P_transition))
+  }
+  colnames(persons) <- names(person1)
+  summary <- colSums(persons)
+  summary <- c(summary, 'n'=n)
+    
+  return(list(trajectories=trajectories, persons=persons, summary=summary, p_init = p_init, P_transition = P_transition,
               start = trajectories[,1], end = trajectories[,52]))
 }
 
@@ -422,7 +427,8 @@ simulate_site_trajectories <- function(
 #' @param sites               n_sites x 3 data frame with site parameters
 #' @param verbose             Produce more diagnostic output
 #' 
-#' @return                    site_summary: (n_sites x 11) data frame of site summaries
+#' @return                    $site_summary: (n_sites x 11) data frame of site summaries
+#'                            $site_perseons: ( (n_sites*n) x 12 ) data frame of person-level results
 #'                            
 #' @examples
 #'             df1 <- simulate_site_settings(n_sites = 8, attr_lo = 0.2, attr_hi = 0.5, covid_lo = 10, covid_hi = 50)
@@ -456,6 +462,7 @@ simulate_study <- function(
   
   n_sites <- nrow(sites)
   site_summary <- as.data.frame( matrix(0,nrow=0,ncol=11) )
+  sites_persons <- as.data.frame( matrix(0, nrow=0, ncol=0))
   
   for(k in 1:n_sites) {
     this_site <- simulate_site_trajectories(
@@ -466,10 +473,13 @@ simulate_study <- function(
       dropout_rate = -log(1-sites[k,'Attrition Rate']/100)/52
     )
     site_summary[k,] <- this_site$summary
+    persons_summary <- as.data.frame(this_site$persons)
+    persons_summary$site <- k
+    sites_persons <- bind_rows( sites_persons, persons_summary )
   }
   names(site_summary) <- names(this_site$summary)
     
-  return(site_summary)
+  return(list(site_summary=site_summary, sites_persons=sites_persons) )
 }  
 
 #' Crude vaccine efficiency statistics
@@ -495,6 +505,34 @@ crude_veff <- function(site_summary) {
   ve3 <- 1 - ir3/ir0
   
   return(c('ve1'=unname(ve1), 've2'=unname(ve2), 've3'=unname(ve3) ) )
+}
+
+#' Vaccine efficiency statistics, corrected for clustering in sites
+#' 
+#' @param sites_persons person level summaries returned by simulate_study()
+#' 
+#' @seealso    [simulate_study()] for the parent function, [svycontrast()]
+#' 
+#' @return     svyconstrast object: estimates and standard errors.
+#'             The estimates can be extracted by names or with coef(); the standard errors, with SE().
+#' 
+#' @export
+cl_veff <- function(sites_persons) {
+  
+  require(survey)
+  svy_study <- svydesign(ids=~site, data=sites_persons, weights = ~1)
+  totals <- svytotal(~
+             weeks_unvaccinated + weeks_vaccinated1 + weeks_vaccinated2 + weeks_vaccinated3 +
+             infected_unvaccinated + infected_vaccinated1 + infected_vaccinated2 + infected_vaccinated3, 
+           design=svy_study)
+  svycontrast(totals, list(
+    ve1 = quote(1-(infected_vaccinated1/weeks_vaccinated1)/(infected_unvaccinated/weeks_unvaccinated)),
+    ve2 = quote(1-(infected_vaccinated2/weeks_vaccinated2)/(infected_unvaccinated/weeks_unvaccinated)),
+    ve3 = quote(1-(infected_vaccinated3/weeks_vaccinated3)/(infected_unvaccinated/weeks_unvaccinated))
+  )
+)
+
+  
 }
 
 #' Simulate the distribution of vaccine effectivenss
@@ -524,16 +562,20 @@ simulate_multiple_studies <- function(
     vaccinated_end = 0.7,
     vm1 = 0.4, vm2 = 0.4, vm3 = 0.2,
     v1e = 0.50, v2e = 0.50, v3e = 0.50, # vaccine efficiency
-    sites,   # data frame of site parameters
+    sites = NULL,   # data frame of site parameters
     n = 1000, # number of simulated persons per site
     reps = 100 # number of replications
 ) {
 
+  if (is.null(sites)) {
+    stop("sites argument is requried")
+  }
+  
   if (!is.null(seed)) {
     set.seed(seed)
   }
   
-  veff_dist <- data.frame( r=1:reps, v1e = NA, v2e = NA, v3e=NA, timing = NA)
+  veff_dist <- data.frame( r=1:reps, v1e = NA, v2e = NA, v3e=NA, se_v1e=NA, se_v2e = NA, se_v3e=NA, timing = NA)
   
   for(i in 1:reps) {
     timing <- system.time(this_study <- simulate_study( 
@@ -544,8 +586,9 @@ simulate_multiple_studies <- function(
         vm1 = vm1, v1e = v1e, 
         vm2 = vm2, v2e = v2e, 
         vm3 = vm3, v3e = v3e ) )
-    this_veff <- crude_veff(this_study)
-    veff_dist[i,2:4] <- this_veff
+    this_veff <- cl_veff(this_study$sites_persons)
+    veff_dist[i,2:4] <- coef(this_veff)
+    veff_dist[i,5:7] <- SE(this_veff)
     veff_dist[i,'timing'] <- timing['elapsed']
     cat('.')
     if (i %% 20 == 0) cat(' ', i, '\n')
