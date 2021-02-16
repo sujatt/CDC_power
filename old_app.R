@@ -18,9 +18,6 @@ ui <- fluidPage(
 
   sidebarPanel(
     # Several slider inputs and one radio button input 
-    sliderInput("num_sites",
-                "Number of sites:",
-                min = 8,  max = 20, value = 8),
     sliderInput("n_per_site",
                 "Sample size per site:",
                 min = 0,  max = 20000, value = 1000),
@@ -71,7 +68,7 @@ ui <- fluidPage(
   mainPanel(
 
     tabsetPanel(
-      tabPanel( h4("DESCRIPTION"),
+      tabPanel( "Simulation description",
                h4(strong("This tool allows the user to simulate the effects of changes
                  in vaccination rates, infection rates, and vaccine efficiency.")),
                  h4("The simulation assumptions are:"),
@@ -138,21 +135,16 @@ ui <- fluidPage(
                  distribution of the estimates of vaccine efficiency as described above.
                     Correspondingly, note that this simulation takes about 100 times as long, i.e., about 5 mintues.")
                ),
-
-  
-      tabPanel(
-        h4("RESULTS"), h4("Site Parameters"),DT::DTOutput('table1'),h4("Vaccine parameters"), DT::DTOutput('table2'),
-    h4("Example of a single simulation result"),DT::DTOutput('table_simulated_sites')  %>% withSpinner(color="#0dc5c1"), 
-       
-      h4("Example of estimated vaccine effectiveness"), DT::DTOutput('table_est_veff') %>% withSpinner(color="#0dc5c1")
-    ), 
-      tabPanel(h4("SIMULATION"), plotOutput(outputId = 'veff_distributions', width='100%', height='600px') %>% withSpinner(color="#0dc5c1"))
-    
+      tabPanel("Site parameters", DT::DTOutput('table1')), 
+      tabPanel("Vaccine parameters", DT::DTOutput('table2')), 
+      tabPanel("Example of a single simulation result", DT::DTOutput('table_simulated_sites') %>% withSpinner(color="#0dc5c1")), 
+      tabPanel("Example of estimated vaccine effectiveness", DT::DTOutput('table_est_veff') %>% withSpinner(color="#0dc5c1")), 
+      tabPanel("Distribution of the estimates of vaccine effectiveness based on 100 simulations", plotOutput(outputId = 'veff_distributions', width='100%', height='600px') %>% withSpinner(color="#0dc5c1"))
+    )
   )
 
 
-)
-)# end of ui fluidPage()
+) # end of ui fluidPage()
 
 getVMState<-function(input) c(input$vm1, input$vm2, input$vm3) # 
 
