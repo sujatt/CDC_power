@@ -72,12 +72,12 @@ ui <- fluidPage(
 
     tabsetPanel(
       tabPanel( h4("DESCRIPTION"),
-               h4(strong("This tool allows the user to simulate the effects of changes
+               h4(strong("This tool simulates the effects of changes
                  in vaccination rates, infection rates, and vaccine efficiency.")),
-                 h4("The simulation assumptions are:"),
-               p("1. Participants are enrolled at ", n_sites, " sites. 
-                 The user can manipulate the number initially enrolled at each site 
-                 with the corresponding control."),
+              
+               h4("The simulation assumptions are as follows:"),
+               p("1. The user can manipulate the number of participants initially enrolled as well as the number of sites 
+                 with the corresponding controls."),
                p("2. Study dropout / attrition rates differ by site as indicated by the controls.
                  The parameter is the expected number of the initial participants who drop out by
                  the end of the study.
@@ -162,6 +162,19 @@ server <- function(input, output, session) {
   oldVMState<-NULL
   newVMState<-NULL
   
+  
+  observeEvent(input$num_sites, 
+               { output$participants <- renderText({toString(input$num_sites)})
+  
+               }
+  )
+  
+  observeEvent(input$n_per_site, 
+               { output$number_sites <- renderText({ toString(input$n_per_site)})
+               
+               }
+  )
+    
   
   observe({
     newVMState<<-getVMState(input)
