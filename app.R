@@ -74,7 +74,6 @@ ui <- fluidPage(
       tabPanel( h4("DESCRIPTION"),
                h4(strong("This tool simulates the effects of changes
                  in vaccination rates, infection rates, and vaccine efficiency.")),
-              
                h4("The simulation assumptions are as follows:"),
                p("1. The user can manipulate the number of participants initially enrolled as well as the number of sites 
                  with the corresponding controls."),
@@ -163,20 +162,27 @@ server <- function(input, output, session) {
   newVMState<-NULL
   
   
-  observeEvent(input$num_sites, 
-               { output$participants <- renderText({toString(input$num_sites)})
-  
-               }
-  )
-  
-  observeEvent(input$n_per_site, 
-               { output$number_sites <- renderText({ toString(input$n_per_site)})
-               
-               }
-  )
     
-  n_sites <- reactive({input$num_sites}) # Now n_sites is the slider input 
+   df1_func <- reactive({ # Function to create the df1 dataframe from slider input 
+    df1 <- as.data.frame(matrix(0,nrow=input$num_sites,3)) 
+ df1
+   })
+   
+   df3_func <- reactive({ 
+     df3 <- as.data.frame(matrix(0,nrow=n_sites, ncol = 11))                          
+     df3
+     })
 
+   df1 <- reactive({
+     df1_func()
+     colnames(df1) <- c("Site","Attrition Rate","Covid Rate")
+     
+})
+   
+   df3 <- reactive({
+     df3_func()
+   })
+ 
   
   observe({
     newVMState<<-getVMState(input)
@@ -200,16 +206,13 @@ server <- function(input, output, session) {
                Values=myvals)
   })
 
-  df1 <- as.data.frame(matrix(0,nrow=n_sites,3)) # Dummy dataframes to contain the results 
   df2 <- as.data.frame(matrix(0,nrow=3,3))
-  df3 <- as.data.frame(matrix(0,nrow=n_sites, ncol = 11))
-  
-  colnames(df1) <- c("Site","Attrition Rate","Covid Rate")
+
   colnames(df2) <- c("Vaccine","Effectiveness","Market Share")
   
   # Edit fdata_sites to create table1
   fdata_sites <- reactive({ 
-    df1 <- simulate_site_settings(n_sites=n_sites, 
+    df1 <- simulate_site_settings(n_sites=input$num_sites, 
                            attr_lo=input$range_attr[1], attr_hi=input$range_attr[2], 
                            covid_lo=input$range_covid[1], covid_hi=input$range_covid[2])
     print("This is what I see in the fdata_sites() reactive:")
