@@ -10,7 +10,7 @@ library(scales)
 library(shinycssloaders)
 
 
-n_sites <- 8
+#n_sites <- 8
 source('simulator.R')
 
 ui <- fluidPage(
@@ -175,6 +175,8 @@ server <- function(input, output, session) {
                }
   )
     
+  n_sites <- reactive({input$num_sites}) # Now n_sites is the slider input 
+
   
   observe({
     newVMState<<-getVMState(input)
