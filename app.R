@@ -140,7 +140,7 @@ ui <- fluidPage(
 
   
       tabPanel(
-        h4("RESULTS"), h4(strong("Site Parameters")),DT::DTOutput('table1'),h4(strong("Vaccine parameters")), DT::DTOutput('table2'),
+        h4("RESULTS"), h4(strong("Site Parameters")),DT::DTOutput('table1')  %>% withSpinner(color="#0dc5c1"),h4(strong("Vaccine parameters")), DT::DTOutput('table2') %>% withSpinner(color="#0dc5c1"),
     h4(strong("Example of a single simulation result")),DT::DTOutput('table_simulated_sites')  %>% withSpinner(color="#0dc5c1"), 
        
       h4(strong("Example of estimated vaccine effectiveness")), DT::DTOutput('table_est_veff') %>% withSpinner(color="#0dc5c1")
